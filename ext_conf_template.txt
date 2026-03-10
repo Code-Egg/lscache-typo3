@@ -1,0 +1,44 @@
+﻿# cat=basic/10; type=boolean; label=Enable LSCache headers
+enabled = 1
+
+# cat=basic/20; type=string; label=Cache-Control for anonymous users (public|private)
+cacheControl = public
+
+# cat=basic/30; type=integer; label=Default max-age in seconds when TYPO3 does not provide a lifetime
+defaultMaxAge = 3600
+
+# cat=basic/40; type=string; label=Behavior when a frontend user is logged in (no-cache|private)
+loggedInBehavior = no-cache
+
+# cat=basic/50; type=boolean; label=Add tags to private responses
+tagPrivateResponses = 0
+
+# cat=tags/10; type=boolean; label=Add page id tag
+addPageIdTag = 1
+
+# cat=tags/20; type=string; label=Tag prefix (ASCII, no spaces)
+tagPrefix = t3
+
+# cat=tags/30; type=string; label=Extra tags (comma-separated)
+extraTags =
+
+# cat=tags/40; type=integer; label=Maximum number of tags to emit
+maxTags = 100
+
+# cat=tags/50; type=integer; label=Maximum tag header length
+maxHeaderLength = 4096
+
+# cat=vary/10; type=string; label=Vary cookies (comma-separated)
+varyCookies =
+
+# cat=purge/10; type=boolean; label=Purge LSCache when TYPO3 caches are flushed
+purgeOnCacheFlush = 1
+
+# cat=purge/20; type=string; label=Purge endpoint path
+purgePath = /_lscache/purge
+
+# cat=purge/30; type=string; label=Purge token (required for purge endpoint)
+purgeToken =
+
+# cat=purge/40; type=integer; label=Purge request timeout (seconds)
+purgeTimeout = 2

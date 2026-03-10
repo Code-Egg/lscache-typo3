@@ -1,0 +1,29 @@
+﻿{
+  "name": "litespeed/lscache-typo3",
+  "type": "typo3-cms-extension",
+  "description": "LiteSpeed Cache integration for TYPO3",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "LiteSpeed Technologies",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^8.2",
+    "typo3/cms-core": "^13.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "LiteSpeed\\Lscache\\": "Classes/"
+    }
+  },
+  "extra": {
+    "typo3/cms": {
+      "extension-key": "lscache"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

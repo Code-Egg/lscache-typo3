@@ -1,0 +1,14 @@
+﻿services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  LiteSpeed\Lscache\:
+    resource: '../Classes/*'
+
+  LiteSpeed\Lscache\EventListener\CacheFlushEventListener:
+    tags:
+      - name: event.listener
+        identifier: 'litespeed/lscache-cache-flush'
+        event: TYPO3\\CMS\\Core\\Cache\\Event\\CacheFlushEvent
