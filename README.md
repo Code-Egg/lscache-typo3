@@ -1,4 +1,4 @@
-﻿# lscache-typo3
+# lscache-typo3
 
 LiteSpeed Cache integration for TYPO3.
 

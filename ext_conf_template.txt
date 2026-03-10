@@ -1,4 +1,4 @@
-﻿# cat=basic/10; type=boolean; label=Enable LSCache headers
+# cat=basic/10; type=boolean; label=Enable LSCache headers
 enabled = 1
 
 # cat=basic/20; type=string; label=Cache-Control for anonymous users (public|private)

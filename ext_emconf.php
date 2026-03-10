@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $EM_CONF[$_EXTKEY] = [
     'title' => 'LiteSpeed Cache',
