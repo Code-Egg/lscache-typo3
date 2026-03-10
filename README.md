@@ -14,8 +14,8 @@ This extension emits LiteSpeed Cache response headers for frontend requests and 
 
 ## Requirements
 
-- TYPO3 13.4 LTS
-- PHP 8.2+
+- TYPO3 12.4 LTS or 13.4 LTS
+- PHP 8.1+
 - OpenLiteSpeed or LiteSpeed Web Server with LSCache enabled
 
 ## Installation

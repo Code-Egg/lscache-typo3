@@ -10,9 +10,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use TYPO3\CMS\Core\Cache\CacheDataCollector;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Site\Entity\Site;
-use TYPO3\CMS\Frontend\Cache\CacheDataCollector;
 use TYPO3\CMS\Frontend\Cache\CacheInstruction;
 use TYPO3\CMS\Frontend\Page\PageArguments;
 
@@ -99,8 +99,7 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
             return false;
         }
 
-        $cacheInstruction = $request->getAttribute('frontend.cache.instruction');
-        if ($cacheInstruction instanceof CacheInstruction && !$cacheInstruction->isCachingAllowed()) {
+        if ($this->isFrontendCachingDisabled($request)) {
             return false;
         }
 
@@ -123,17 +122,25 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
 
     private function resolveLifetime(ServerRequestInterface $request): int
     {
-        $collector = $request->getAttribute('frontend.cache.collector');
-        if (!$collector instanceof CacheDataCollector) {
-            return 0;
+        if (class_exists(CacheDataCollector::class)) {
+            $collector = $request->getAttribute('frontend.cache.collector');
+            if ($collector instanceof CacheDataCollector) {
+                $lifetime = $collector->resolveLifetime();
+                if (is_int($lifetime) && $lifetime !== PHP_INT_MAX) {
+                    return max(0, $lifetime);
+                }
+            }
         }
 
-        $lifetime = $collector->resolveLifetime();
-        if (!is_int($lifetime) || $lifetime === PHP_INT_MAX) {
-            return 0;
+        $tsfe = $this->getTsfe();
+        if ($tsfe !== null && method_exists($tsfe, 'get_cache_timeout')) {
+            $lifetime = $tsfe->get_cache_timeout();
+            if (is_int($lifetime)) {
+                return max(0, $lifetime);
+            }
         }
 
-        return max(0, $lifetime);
+        return 0;
     }
 
     private function buildTags(ServerRequestInterface $request, bool $isPrivate): array
@@ -161,12 +168,30 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
             }
         }
 
-        $collector = $request->getAttribute('frontend.cache.collector');
-        if ($collector instanceof CacheDataCollector) {
-            foreach ($collector->getCacheTags() as $cacheTag) {
-                $name = $this->extractTagName($cacheTag);
-                if ($name !== '') {
-                    $tags[] = $this->applyPrefix($prefix, $name);
+        if (class_exists(CacheDataCollector::class)) {
+            $collector = $request->getAttribute('frontend.cache.collector');
+            if ($collector instanceof CacheDataCollector) {
+                foreach ($collector->getCacheTags() as $cacheTag) {
+                    $name = $this->extractTagName($cacheTag);
+                    if ($name !== '') {
+                        $tags[] = $this->applyPrefix($prefix, $name);
+                    }
+                }
+            }
+        }
+
+        $tsfe = $this->getTsfe();
+        if ($tsfe !== null) {
+            $tsfeTags = [];
+            if (method_exists($tsfe, 'getPageCacheTags')) {
+                $tsfeTags = $tsfe->getPageCacheTags();
+            } elseif (property_exists($tsfe, 'pageCacheTags')) {
+                $tsfeTags = $tsfe->pageCacheTags;
+            }
+
+            if (is_array($tsfeTags)) {
+                foreach ($tsfeTags as $tag) {
+                    $tags[] = $this->applyPrefix($prefix, (string)$tag);
                 }
             }
         }
@@ -179,6 +204,11 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
         $pageArguments = $request->getAttribute('routing');
         if ($pageArguments instanceof PageArguments) {
             return (int)$pageArguments->getPageId();
+        }
+
+        $tsfe = $this->getTsfe();
+        if ($tsfe !== null && property_exists($tsfe, 'id')) {
+            return (int)$tsfe->id;
         }
 
         return 0;
@@ -212,5 +242,33 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
         }
 
         return $prefix . '_' . $tag;
+    }
+
+    private function isFrontendCachingDisabled(ServerRequestInterface $request): bool
+    {
+        if (class_exists(CacheInstruction::class)) {
+            $cacheInstruction = $request->getAttribute('frontend.cache.instruction');
+            if ($cacheInstruction instanceof CacheInstruction && !$cacheInstruction->isCachingAllowed()) {
+                return true;
+            }
+        }
+
+        $noCache = $request->getAttribute('noCache');
+        if ($noCache === true) {
+            return true;
+        }
+
+        $tsfe = $this->getTsfe();
+        if ($tsfe !== null && property_exists($tsfe, 'no_cache') && $tsfe->no_cache) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function getTsfe(): ?object
+    {
+        $tsfe = $GLOBALS['TSFE'] ?? null;
+        return is_object($tsfe) ? $tsfe : null;
     }
 }
