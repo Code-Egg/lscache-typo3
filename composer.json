@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "litespeed/lscache-typo3",
   "type": "typo3-cms-extension",
   "description": "LiteSpeed Cache integration for TYPO3",
