@@ -71,26 +71,6 @@ final class ExtensionConfig
         return $this->config['varyCookies'];
     }
 
-    public function purgeOnCacheFlush(): bool
-    {
-        return $this->config['purgeOnCacheFlush'];
-    }
-
-    public function getPurgePath(): string
-    {
-        return $this->config['purgePath'];
-    }
-
-    public function getPurgeToken(): string
-    {
-        return $this->config['purgeToken'];
-    }
-
-    public function getPurgeTimeout(): int
-    {
-        return $this->config['purgeTimeout'];
-    }
-
     private function load(): array
     {
         $defaults = [
@@ -105,10 +85,6 @@ final class ExtensionConfig
             'maxTags' => 100,
             'maxHeaderLength' => 4096,
             'varyCookies' => [],
-            'purgeOnCacheFlush' => true,
-            'purgePath' => '/_lscache/purge',
-            'purgeToken' => '',
-            'purgeTimeout' => 2,
         ];
 
         $raw = [];
@@ -141,10 +117,6 @@ final class ExtensionConfig
         $config['maxTags'] = max(0, (int)$config['maxTags']);
         $config['maxHeaderLength'] = max(128, (int)$config['maxHeaderLength']);
         $config['varyCookies'] = $this->splitList((string)($config['varyCookies'] ?? ''));
-        $config['purgeOnCacheFlush'] = (bool)$config['purgeOnCacheFlush'];
-        $config['purgePath'] = $this->normalizePath((string)$config['purgePath']);
-        $config['purgeToken'] = trim((string)$config['purgeToken']);
-        $config['purgeTimeout'] = max(1, (int)$config['purgeTimeout']);
 
         return $config;
     }
@@ -158,18 +130,6 @@ final class ExtensionConfig
         $parts = array_map('trim', explode(',', $value));
         $parts = array_filter($parts, static fn(string $item): bool => $item !== '');
         return array_values(array_unique($parts));
-    }
-
-    private function normalizePath(string $path): string
-    {
-        $path = trim($path);
-        if ($path === '') {
-            return '/_lscache/purge';
-        }
-        if ($path[0] !== '/') {
-            $path = '/' . $path;
-        }
-        return $path;
     }
 
     private function sanitizeToken(string $value, string $fallback): string

@@ -5,22 +5,18 @@ declare(strict_types=1);
 namespace LiteSpeed\Lscache\EventListener;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
-use LiteSpeed\Lscache\Service\PurgeService;
-use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Cache\Event\CacheFlushEvent;
 
 final class CacheFlushEventListener
 {
     public function __construct(
         private readonly ExtensionConfig $config,
-        private readonly PurgeService $purgeService,
-        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function __invoke(CacheFlushEvent $event): void
     {
-        if (!$this->config->isEnabled() || !$this->config->purgeOnCacheFlush()) {
+        if (!$this->config->isEnabled()) {
             return;
         }
 
@@ -28,10 +24,7 @@ final class CacheFlushEventListener
             return;
         }
 
-        $result = $this->purgeService->purgeAllSites();
-        if ($result['failed'] > 0) {
-            $this->logger->warning('LSCache purge completed with errors.', $result);
-        }
+        header('X-LiteSpeed-Purge: *');
     }
 
     private function shouldPurge(CacheFlushEvent $event): bool
