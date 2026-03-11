@@ -6,22 +6,18 @@ namespace LiteSpeed\Lscache\Hook;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
 use LiteSpeed\Lscache\Service\PurgeService;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 
 final class ClearCacheHook
 {
-    public function __construct(
-        private readonly ExtensionConfig $config,
-        private readonly PurgeService $purgeService,
-    ) {
-    }
-
     /**
      * Hook: clearCachePostProc
      */
     public function clearCachePostProc(array $params, DataHandler $dataHandler): void
     {
-        if (!$this->config->isEnabled()) {
+        $config = GeneralUtility::makeInstance(ExtensionConfig::class);
+        if (!$config->isEnabled()) {
             return;
         }
 
@@ -30,19 +26,20 @@ final class ClearCacheHook
             return;
         }
 
+        $purgeService = GeneralUtility::makeInstance(PurgeService::class);
         foreach ($this->normalizeCacheCmd($cacheCmd) as $command) {
-            if ($this->handleCommand($command)) {
+            if ($this->handleCommand($command, $purgeService)) {
                 continue;
             }
         }
     }
 
-    private function handleCommand(mixed $command): bool
+    private function handleCommand(mixed $command, PurgeService $purgeService): bool
     {
         if (is_int($command) || (is_string($command) && ctype_digit($command))) {
             $pageId = (int)$command;
             if ($pageId > 0) {
-                $this->purgeService->purgePageId($pageId);
+                $purgeService->purgePageId($pageId);
                 return true;
             }
         }
@@ -54,7 +51,7 @@ final class ClearCacheHook
 
         $lower = strtolower($value);
         if ($lower === 'pages' || $lower === 'all') {
-            $this->purgeService->purgeAllSites();
+            $purgeService->purgeAllSites();
             return true;
         }
 
@@ -62,7 +59,7 @@ final class ClearCacheHook
             $list = preg_replace('/^(tag|tags)[:=]/i', '', $value);
             $tags = $this->splitTags($list);
             if ($tags !== []) {
-                $this->purgeService->purgeTags($tags);
+                $purgeService->purgeTags($tags);
             }
             return true;
         }
