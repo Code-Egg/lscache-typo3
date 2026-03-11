@@ -6,8 +6,12 @@ namespace LiteSpeed\Lscache\Hook;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
 use LiteSpeed\Lscache\Service\PurgeService;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
+use TYPO3\CMS\Core\Http\RequestFactory;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Site\SiteFinder;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class ClearCacheHook
 {
@@ -16,9 +20,8 @@ final class ClearCacheHook
      */
     public function clearCachePostProc(array $params, DataHandler $dataHandler): void
     {
-        $container = GeneralUtility::getContainer();
-        $config = $container->get(ExtensionConfig::class);
-        if (!$config instanceof ExtensionConfig || !$config->isEnabled()) {
+        $config = $this->buildConfig();
+        if (!$config->isEnabled()) {
             return;
         }
 
@@ -27,10 +30,7 @@ final class ClearCacheHook
             return;
         }
 
-        $purgeService = $container->get(PurgeService::class);
-        if (!$purgeService instanceof PurgeService) {
-            return;
-        }
+        $purgeService = $this->buildPurgeService($config);
         foreach ($this->normalizeCacheCmd($cacheCmd) as $command) {
             if ($this->handleCommand($command, $purgeService)) {
                 continue;
@@ -102,5 +102,20 @@ final class ClearCacheHook
         $parts = array_map('trim', explode(',', $value));
         $parts = array_filter($parts, static fn(string $item): bool => $item !== '');
         return array_values(array_unique($parts));
+    }
+
+    private function buildConfig(): ExtensionConfig
+    {
+        $extensionConfiguration = GeneralUtility::makeInstance(ExtensionConfiguration::class);
+        return new ExtensionConfig($extensionConfiguration);
+    }
+
+    private function buildPurgeService(ExtensionConfig $config): PurgeService
+    {
+        $siteFinder = GeneralUtility::makeInstance(SiteFinder::class);
+        $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+        $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(PurgeService::class);
+
+        return new PurgeService($config, $siteFinder, $requestFactory, $logger);
     }
 }
