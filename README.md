@@ -10,6 +10,7 @@ This extension emits LiteSpeed Cache response headers for frontend requests and 
 - Adds `X-LiteSpeed-Tag` derived from TYPO3 cache tags (plus page and site tags).
 - Adds `X-LiteSpeed-Vary` for cookie-based variations.
 - Purges LSCache on TYPO3 cache flush events.
+- Purges LSCache for specific pages when TYPO3 clears a page cache.
 - CLI command to purge LSCache manually.
 
 ## Requirements

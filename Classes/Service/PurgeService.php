@@ -32,10 +32,44 @@ final class PurgeService
         return $this->purgeSites([$site]);
     }
 
+    public function purgeTags(array $tags): array
+    {
+        $tags = $this->prefixTags($tags);
+        if ($tags === []) {
+            return [
+                'success' => 0,
+                'failed' => 0,
+                'errors' => ['No tags to purge.'],
+            ];
+        }
+
+        $sites = $this->siteFinder->getAllSites();
+        return $this->purgeSitesWithTags($sites, $tags);
+    }
+
+    public function purgePageId(int $pageId): array
+    {
+        if ($pageId <= 0) {
+            return [
+                'success' => 0,
+                'failed' => 0,
+                'errors' => ['Invalid page id for purge.'],
+            ];
+        }
+
+        $tags = $this->buildPageTags($pageId);
+        return $this->purgeTags($tags);
+    }
+
     /**
      * @param Site[] $sites
      */
     public function purgeSites(array $sites): array
+    {
+        return $this->purgeSitesWithTags($sites, null);
+    }
+
+    private function purgeSitesWithTags(array $sites, ?array $tags): array
     {
         $token = $this->config->getPurgeToken();
         if ($token === '') {
@@ -54,7 +88,7 @@ final class PurgeService
 
         foreach ($sites as $site) {
             try {
-                $this->sendPurgeRequest($site, $token);
+                $this->sendPurgeRequest($site, $token, $tags);
                 $results['success']++;
             } catch (\Throwable $exception) {
                 $results['failed']++;
@@ -67,7 +101,7 @@ final class PurgeService
         return $results;
     }
 
-    private function sendPurgeRequest(Site $site, string $token): void
+    private function sendPurgeRequest(Site $site, string $token, ?array $tags): void
     {
         $baseUri = $site->getBase();
         $basePath = rtrim($baseUri->getPath(), '/');
@@ -77,15 +111,50 @@ final class PurgeService
             ->withPath($purgePath)
             ->withQuery('');
 
+        $query = ['token' => $token];
+        if ($tags === null) {
+            $query['all'] = '1';
+        } else {
+            $query['tags'] = implode(',', $tags);
+        }
+
         $this->requestFactory->request((string)$purgeUri, 'GET', [
-            'query' => [
-                'token' => $token,
-                'all' => '1',
-            ],
+            'query' => $query,
             'timeout' => $this->config->getPurgeTimeout(),
             'headers' => [
                 'User-Agent' => 'TYPO3-LSCache-Purger',
             ],
         ]);
+    }
+
+    private function buildPageTags(int $pageId): array
+    {
+        $tags = [
+            'page_' . $pageId,
+            'pageId_' . $pageId,
+        ];
+
+        return $this->prefixTags($tags);
+    }
+
+    private function prefixTags(array $tags): array
+    {
+        $prefix = $this->config->getTagPrefix();
+        $normalized = [];
+
+        foreach ($tags as $tag) {
+            $tag = trim((string)$tag);
+            if ($tag === '') {
+                continue;
+            }
+
+            if ($prefix !== '' && !str_starts_with($tag, $prefix . '_')) {
+                $tag = $prefix . '_' . $tag;
+            }
+
+            $normalized[$tag] = true;
+        }
+
+        return array_keys($normalized);
     }
 }
