@@ -33,10 +33,6 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
             return $response;
         }
 
-        if ($request->getUri()->getPath() === $this->config->getPurgePath()) {
-            return $response;
-        }
-
         if (!$this->isCacheCandidate($request, $response)) {
             return $this->withLiteSpeedHeader($response, 'no-cache');
         }
