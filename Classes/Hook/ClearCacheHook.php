@@ -16,8 +16,9 @@ final class ClearCacheHook
      */
     public function clearCachePostProc(array $params, DataHandler $dataHandler): void
     {
-        $config = GeneralUtility::makeInstance(ExtensionConfig::class);
-        if (!$config->isEnabled()) {
+        $container = GeneralUtility::getContainer();
+        $config = $container->get(ExtensionConfig::class);
+        if (!$config instanceof ExtensionConfig || !$config->isEnabled()) {
             return;
         }
 
@@ -26,7 +27,10 @@ final class ClearCacheHook
             return;
         }
 
-        $purgeService = GeneralUtility::makeInstance(PurgeService::class);
+        $purgeService = $container->get(PurgeService::class);
+        if (!$purgeService instanceof PurgeService) {
+            return;
+        }
         foreach ($this->normalizeCacheCmd($cacheCmd) as $command) {
             if ($this->handleCommand($command, $purgeService)) {
                 continue;
