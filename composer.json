@@ -1,5 +1,5 @@
 {
-  "name": "litespeed/lscache-typo3",
+  "name": "cold-egg/lscache-typo3",
   "type": "typo3-cms-extension",
   "description": "LiteSpeed Cache integration for TYPO3",
   "license": "GPL-2.0-or-later",

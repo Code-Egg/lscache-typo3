@@ -31,14 +31,3 @@ maxHeaderLength = 4096
 # cat=vary/10; type=string; label=Vary cookies (comma-separated)
 varyCookies =
 
-# cat=purge/10; type=boolean; label=Purge LSCache when TYPO3 caches are flushed
-purgeOnCacheFlush = 1
-
-# cat=purge/20; type=string; label=Purge endpoint path
-purgePath = /_lscache/purge
-
-# cat=purge/30; type=string; label=Purge token (required for purge endpoint)
-purgeToken =
-
-# cat=purge/40; type=integer; label=Purge request timeout (seconds)
-purgeTimeout = 2
