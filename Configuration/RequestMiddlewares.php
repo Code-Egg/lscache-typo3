@@ -10,7 +10,7 @@ return [
         'litespeed/lscache-purge-receiver' => [
             'target' => PurgeReceiverMiddleware::class,
             'before' => [
-                'typo3/cms-frontend/tsfe',
+                'typo3/cms-frontend/site',
             ],
         ],
         'litespeed/lscache-headers' => [

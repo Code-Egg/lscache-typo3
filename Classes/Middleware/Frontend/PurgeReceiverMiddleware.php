@@ -42,9 +42,11 @@ final class PurgeReceiverMiddleware implements MiddlewareInterface
         $expected = hash_hmac('sha256', $purgeValue, $encryptionKey);
 
         if (!hash_equals($expected, $token)) {
+            error_log('[lscache] PurgeReceiverMiddleware: invalid token for purgeValue=' . $purgeValue);
             return $handler->handle($request);
         }
 
+        error_log('[lscache] PurgeReceiverMiddleware: sending X-LiteSpeed-Purge=' . $purgeValue);
         return (new Response(204))->withHeader('X-LiteSpeed-Purge', $purgeValue);
     }
 }
