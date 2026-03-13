@@ -6,6 +6,7 @@ namespace LiteSpeed\Lscache\Middleware\Frontend;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
 use LiteSpeed\Lscache\Service\HeaderBuilder;
+use LiteSpeed\Lscache\Service\PurgeQueue;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -22,6 +23,7 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
         private readonly ExtensionConfig $config,
         private readonly HeaderBuilder $headerBuilder,
         private readonly Context $context,
+        private readonly PurgeQueue $purgeQueue,
     ) {
     }
 
@@ -31,6 +33,15 @@ final class CacheHeadersMiddleware implements MiddlewareInterface
 
         if (!$this->config->isEnabled()) {
             return $response;
+        }
+
+        // Flush any purges queued by DataHandler hooks or cache flush events.
+        // These are sent here (on a PHP-served frontend response) because LiteSpeed
+        // reliably processes X-LiteSpeed-Purge from frontend responses even when
+        // the backend path is excluded from LiteSpeed cache processing.
+        $pendingPurge = $this->purgeQueue->consume();
+        if ($pendingPurge !== null && !$response->hasHeader('X-LiteSpeed-Purge')) {
+            $response = $response->withHeader('X-LiteSpeed-Purge', $pendingPurge);
         }
 
         if (!$this->isCacheCandidate($request, $response)) {

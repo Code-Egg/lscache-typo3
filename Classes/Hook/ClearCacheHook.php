@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace LiteSpeed\Lscache\Hook;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
+use LiteSpeed\Lscache\Service\PurgeQueue;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -48,8 +49,11 @@ final class ClearCacheHook
             }
         }
 
+        $queue = GeneralUtility::makeInstance(PurgeQueue::class);
+
         if ($purgeAll) {
             header('X-LiteSpeed-Purge: *');
+            $queue->add(true);
             return;
         }
 
@@ -57,6 +61,7 @@ final class ClearCacheHook
         if ($tags !== []) {
             $parts = array_map(static fn(string $t): string => 'tag=' . $t, $tags);
             header('X-LiteSpeed-Purge: public,' . implode(',', $parts));
+            $queue->add(false, $tags);
         }
     }
 
