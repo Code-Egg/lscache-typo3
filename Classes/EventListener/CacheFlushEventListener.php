@@ -6,6 +6,7 @@ namespace LiteSpeed\Lscache\EventListener;
 
 use LiteSpeed\Lscache\Configuration\ExtensionConfig;
 use LiteSpeed\Lscache\Service\PurgeQueue;
+use LiteSpeed\Lscache\Service\PurgeSender;
 use TYPO3\CMS\Core\Cache\Event\CacheFlushEvent;
 
 final class CacheFlushEventListener
@@ -13,6 +14,7 @@ final class CacheFlushEventListener
     public function __construct(
         private readonly ExtensionConfig $config,
         private readonly PurgeQueue $purgeQueue,
+        private readonly PurgeSender $purgeSender,
     ) {
     }
 
@@ -24,5 +26,6 @@ final class CacheFlushEventListener
 
         header('X-LiteSpeed-Purge: *');
         $this->purgeQueue->add(true);
+        $this->purgeSender->send('*');
     }
 }
