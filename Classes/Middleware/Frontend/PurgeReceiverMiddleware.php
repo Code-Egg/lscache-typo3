@@ -37,6 +37,6 @@ final class PurgeReceiverMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        return (new Response(204))->withHeader('X-LiteSpeed-Purge', $purgeValue);
+        return new Response('php://temp', 204, ['X-LiteSpeed-Purge' => $purgeValue]);
     }
 }
