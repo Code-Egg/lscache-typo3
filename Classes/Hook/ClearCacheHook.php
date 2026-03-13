@@ -24,6 +24,7 @@ final class ClearCacheHook
         }
 
         $cacheCmd = $params['cacheCmd'] ?? null;
+        error_log('[lscache] ClearCacheHook fired, cacheCmd=' . json_encode($cacheCmd));
         if ($cacheCmd === null || $cacheCmd === '') {
             return;
         }
